@@ -1,5 +1,5 @@
 import http from "./http_common";
-import { getDate, getTime } from "../utils/timestamp";
+import { getDate } from "../utils/timestamp";
 
 class PampApi {
     getAll() {
@@ -11,17 +11,21 @@ class PampApi {
         return http.post("/new/feed", data);
     }
 
+    delete_feed(data) {
+        return http.post("/del/feed", data);
+    }
+
     create_bowel(data) {
         data.date = getDate();
         return http.post("/new/bowel", data);
     }
 
-    update(id, data) {
-        return http.put(`/update/${id}`, data);
+    delete_bowel(data) {
+        return http.post("/del/bowel", data);
     }
 
-    delete(id) {
-        return http.delete(`/delete/${id}`);
+    update(id, data) {
+        return http.put(`/update/${id}`, data);
     }
 }
 

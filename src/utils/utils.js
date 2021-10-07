@@ -7,3 +7,14 @@ export const jsonToArray = (jsonObject) => {
 export const constructTime = (hours, minutes, tod) => {
     return ( hours + ":" + minutes + " " + tod );
 }
+
+export const finalizeTimeArray = (array) => {
+    var finalArray = []
+    array.forEach(element => {
+        if(element.length < 2) {
+            element = "0" + element;
+        }
+        finalArray.push(element);
+    });
+    return finalArray;
+}

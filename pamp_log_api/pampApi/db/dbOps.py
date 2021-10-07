@@ -40,6 +40,21 @@ class PampRepository:
 
         return result
 
+    def deleteFeed(self, rowid):
+        result = False
+
+        query = "DELETE FROM feed WHERE rowid = ?"
+
+        try:
+            self.curs.execute(query, (rowid,))
+            result = True
+        except Exception as e:
+            print(e)
+
+        self.connection.commit()
+
+        return result
+
 
     def createBowel(self, excrement, void, date, time):
         result = False
@@ -56,3 +71,17 @@ class PampRepository:
 
         return result
 
+    def deleteBowel(self, rowid):
+        result = False
+
+        query = "DELETE FROM bowel WHERE rowid = ?"
+
+        try:
+            self.curs.execute(query, (rowid,))
+            result = True
+        except Exception as e:
+            print(e)
+
+        self.connection.commit()
+
+        return result

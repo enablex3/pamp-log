@@ -1,14 +1,15 @@
 import { Component } from 'react';
 import BrandText from './BrandText.png';
 import { FaPoo, FaCheck } from 'react-icons/fa';
+import { FiEdit2, FiTrash2 } from "react-icons/fi";
 import { GiWaterDrop, GiBabyBottle } from 'react-icons/gi';
-import { AiTwotoneCalendar } from 'react-icons/ai';
+import { AiTwotoneCalendar, AiFillEdit } from 'react-icons/ai';
 import { BsFillPlusCircleFill } from 'react-icons/bs';
 import { BiTime } from 'react-icons/bi';
 import { ImCross } from 'react-icons/im';
 import Modal from "react-modal";
-import { retrieveLog, createBowelLog, createFeedLog } from './actions/pamp';
-import { jsonToArray, constructTime } from './utils/utils';
+import { retrieveLog, createBowelLog, createFeedLog, deleteFeedLog, deleteBowelLog } from './actions/pamp';
+import { jsonToArray, constructTime, finalizeTimeArray } from './utils/utils';
 import { connect } from 'react-redux';
 import './App.css';
 
@@ -22,16 +23,19 @@ class App extends Component {
     this.state = {
       bowelClicked: false,
       feedClicked: false,
+      deleteClicked: false,
       excrement: "Yes",
       void_p: "Yes",
       ounces: null,
       hours: "1",
       minutes: "0",
-      tod: "AM"
+      tod: "AM",
+      rowid: null,
+      type: null
     };
 
     this.hourOptions = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
-    this.minuteOptions = Array.from({length: 60}, (_, n) => n);
+    this.minuteOptions = finalizeTimeArray(Array.from({length: 60}, (_, n) => n.toString()));
 
   }
 
@@ -54,11 +58,28 @@ class App extends Component {
     this.setState({ void_p: "Yes", excrement: "Yes", hours: "1", minutes: "0", tod: "AM" });
   }
 
+  deleteBowel() {
+    const { rowid, deleteClicked } = this.state;
+    this.props.deleteBowelLog(rowid);
+    this.setState({ deleteClicked: !deleteClicked, rowid: null, type: null });
+  }
+
   feedCreate(feedClicked) {
     const { ounces, hours, minutes, tod } = this.state;
     this.setState({ feedClicked: feedClicked });
     this.props.createFeedLog(ounces, constructTime(hours, minutes, tod));
     this.setState({ ounces: null, hours: "1", minutes: "0", tod: "AM" });
+  }
+
+  deleteFeed() {
+    const { rowid, deleteClicked } = this.state;
+    this.props.deleteFeedLog(rowid);
+    this.setState({ deleteClicked: !deleteClicked, rowid: null, type: null });
+  }
+
+  openDelete(rowid, deleteClicked, type) {
+    this.setState({ deleteClicked: deleteClicked, rowid: rowid, type: type });
+    this.renderDelete(rowid);
   }
 
   renderTimeElements() {
@@ -83,11 +104,12 @@ class App extends Component {
           </label>
         </div>
         <div className="column">
-          <br />
+          <label>AM/PM
           <select id="tod-select" name="tod" onChange={(e) => this.setState({ tod: e.target.value })}>
             <option>AM</option>
             <option>PM</option>
           </select>
+          </label>
         </div>
       </div>
     )
@@ -142,7 +164,7 @@ class App extends Component {
             <form>
               <label>
                 Ounces:
-                <input type="number" name="ounces" onChange={(e) => this.setState({ ounces: e.target.value})} />
+                <input type="number" name="ounces" onChange={(e) => this.setState({ ounces: e.target.value })} />
               </label>
               { this.renderTimeElements() }
             </form>
@@ -156,17 +178,46 @@ class App extends Component {
 
   renderYesNo(selection) {
     if (selection === "No") {
-      return ( <ImCross size="20" color="#CD001A" />);
+      return ( <ImCross size="12" color="#CD001A" />);
     } else {
-      return ( <FaCheck size="20" color="#8FDBD9" />)
+      return ( <FaCheck size="12" color="#8FDBD9" />)
     }
+  }
+
+  renderDelete(rowid) {
+    const { deleteClicked, type } = this.state;
+    return(
+      <div>
+        <Modal className="modal"
+          isOpen={deleteClicked}
+          contentLabel="Delete Modal"
+        >
+          <div class="form-style-5">
+            <form>
+              <label>Are you sure?</label>
+            </form>
+            { type === "BOWEL" ? 
+              <button id="cancel-button" onClick={() => this.deleteBowel(rowid)}>Delete</button> 
+                : 
+              null
+            }
+            { type === "BOWEL" ? 
+              <button id="cancel-button" onClick={() => this.deleteFeed(rowid)}>Delete</button>
+                : 
+              null
+            }
+            <button onClick={() => this.setState({deleteClicked: !deleteClicked})}>Keep</button>
+          </div>
+        </Modal>
+      </div>
+    );
   }
 
   render() {
 
     const { pamp } = this.props;
-    const { bowelClicked, feedClicked } = this.state;
-
+    const { bowelClicked, feedClicked, deleteClicked, rowid, type } = this.state;
+    
     return (
       <div className="App">
         <header className="App-header">
@@ -185,23 +236,26 @@ class App extends Component {
             <table className='dataTable'>
               <thead>
                 <tr>
-                  <th><GiWaterDrop size="30" color="azure" /></th>
-                  <th><FaPoo size="30" color="azure"/></th>
-                  <th><AiTwotoneCalendar size="30" color="azure" /></th>
-                  <th><BiTime size="30" color="azure" /></th>
+                  <th><GiWaterDrop size="20" color="azure" /></th>
+                  <th><FaPoo size="20" color="azure"/></th>
+                  <th><AiTwotoneCalendar size="20" color="azure" /></th>
+                  <th><BiTime size="20" color="azure" /></th>
+                  <th><AiFillEdit size="20" color="azure" /></th>
                 </tr>
               </thead>
               <tbody>
                 { pamp.bowel !== undefined ? jsonToArray(pamp.bowel).reverse().map((obj, i) => 
-                    <tr key={obj.rowid}>
+                    <tr key={obj.name}>
                       <td>{this.renderYesNo(obj.value.void)}</td>
                       <td>{this.renderYesNo(obj.value.excrement)}</td>
                       <td>{obj.value.date}</td>
                       <td>{obj.value.time}</td>
+                      <td><FiEdit2 size="20" color="black"/><FiTrash2 size="20" color="black" onClick={(e) => this.openDelete(obj.name, !deleteClicked, "BOWEL")}/></td>
                     </tr>
                 ) : null }
               </tbody>
             </table>
+            { deleteClicked ? this.openDelete() : null }
             <div className="row">
               <div className="column">
                 <h2 style={{"marginBottom" : "-20px"}}>Feedings</h2>
@@ -214,17 +268,19 @@ class App extends Component {
             <table className='dataTable'>
               <thead>
                 <tr>
-                  <th><GiBabyBottle size="30" color="azure"/></th>
-                  <th><AiTwotoneCalendar size="30" color="azure" /></th>
-                  <th><BiTime size="30" color="azure" /></th>
+                  <th><GiBabyBottle size="20" color="azure"/></th>
+                  <th><AiTwotoneCalendar size="20" color="azure" /></th>
+                  <th><BiTime size="20" color="azure" /></th>
+                  <th><AiFillEdit size="20" color="azure" /></th>
                 </tr>
               </thead>
               <tbody>
                 { pamp.feed !== undefined ? jsonToArray(pamp.feed).reverse().map((obj, i) => 
-                  <tr key={obj.rowid}>
+                  <tr key={obj.name}>
                     <td>{obj.value.ounces}oz</td>
                     <td>{obj.value.date}</td>
                     <td>{obj.value.time}</td>
+                    <td><FiEdit2 size="20" color="black"/><FiTrash2 size="20" color="black" onClick={(e) => this.openDelete(obj.name, !deleteClicked, "FEED")}/></td>
                   </tr>
                 ) : null }
               </tbody>
@@ -242,4 +298,4 @@ const mapStateToProps = (state) => {
   };
 };
 
-export default connect(mapStateToProps, { retrieveLog, createBowelLog, createFeedLog })(App);
+export default connect(mapStateToProps, { retrieveLog, createBowelLog, createFeedLog, deleteFeedLog, deleteBowelLog })(App);

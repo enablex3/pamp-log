@@ -83,7 +83,7 @@ img:hover::after {
 .dataTable th,
 .dataTable td {
     padding: 12px 12px;
-    font-size: 20px;
+    font-size: 12px;
 }
 
 .dataTable th {

@@ -26,6 +26,16 @@ def feed(request):
         return HttpResponseServerError("Something went wrong with the creation of this record.")
 
 @csrf_exempt
+def del_feed(request):
+    data = json.loads(request.body)
+    pampRepo = PampRepository()
+    if (pampRepo.deleteFeed(data["rowid"])):
+        response = createResponse()
+        return JsonResponse(response)
+    else:
+        return HttpResponseServerError("Something went wrong with the removal of this record.")
+
+@csrf_exempt
 def bowel(request):
     data = json.loads(request.body)
     pampRepo = PampRepository()
@@ -34,6 +44,16 @@ def bowel(request):
         return JsonResponse(response)
     else:
         return HttpResponseServerError("Something went wrong with the creation of this record.")
+
+@csrf_exempt
+def del_bowel(request):
+    data = json.loads(request.body)
+    pampRepo = PampRepository()
+    if (pampRepo.deleteBowel(data["rowid"])):
+        response = createResponse()
+        return JsonResponse(response)
+    else:
+        return HttpResponseServerError("Something went wrong with the removal of this record.")
 
 def createResponse():
     response = {}
